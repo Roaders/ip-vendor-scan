@@ -62,28 +62,26 @@ function scanIps() {
         share(),
     );
 
-    let ipCount = 0;
-    let vendors: IIpVendor[] = [];
-    const ipTableStream = defer(() => from(getTable()));
+    const vendorStream = ipStream.pipe(
+        toArray(),
+        combineLatest(defer(() => from(getTable()))),
+        mergeMap(([responses, arpTable]) => getVendors(responses, arpTable), 1),
+        share(),
+    );
 
-    ipStream
-        .pipe(
-            toArray(),
-            combineLatest(ipTableStream),
-            mergeMap(([responses, arpTable]) => getVendors(responses, arpTable), 1),
-            filter((ip) => (vendorRegExp != null ? vendorRegExp.test(ip.vendor) : true)),
-            scan((all, vendor) => [...all, vendor], new Array<IIpVendor>()),
-        )
-        .subscribe(
-            (results) => {
-                vendors = results;
-                logProgress(ipCount, vendors);
-            },
-            undefined,
-            () => printResultsTable(vendors),
-        );
+    let ipCount = 0;
 
     ipStream.pipe().subscribe(() => logProgress(++ipCount));
+    vendorStream
+        .pipe(scan((all, vendor) => [...all, vendor], new Array<IIpVendor>()))
+        .subscribe((vendors) => logProgress(ipCount, vendors));
+
+    vendorStream
+        .pipe(
+            filter((ip) => (vendorRegExp != null ? vendorRegExp.test(ip.vendor) : true)),
+            toArray(),
+        )
+        .subscribe((vendors) => printResultsTable(vendors));
 }
 
 if (options.help) {
