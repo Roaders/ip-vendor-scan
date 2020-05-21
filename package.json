@@ -1,6 +1,6 @@
 {
-    "name": "ip-vendor-scanner",
-    "version": "1.0.2",
+    "name": "ip-vendor-scan",
+    "version": "1.0.0",
     "description": "Scans a range of IP addresses and returns a list of network names and vendors",
     "main": "dist/index.js",
     "bin": {
