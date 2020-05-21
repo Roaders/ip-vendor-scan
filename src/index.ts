@@ -7,15 +7,16 @@ import {
     getDefaultRange,
     expandRange,
     logProgress,
-    getVendor,
     getIpName,
     printWelcomeMessage,
+    getVendors,
 } from './helpers';
 import { networkInterfaces } from 'os';
-import { from } from 'rxjs';
-import { mergeMap, filter, share, toArray, scan } from 'rxjs/operators';
+import { from, defer } from 'rxjs';
+import { mergeMap, filter, share, toArray, scan, combineLatest } from 'rxjs/operators';
 import { promise as pingPromise } from 'ping';
 import Table from 'cli-table';
+import { getTable } from '@network-utils/arp-lookup';
 
 const commandOptions: Partial<ICommandLineArgs> = commandLineArgs([
     { name: 'range', alias: 'r' },
@@ -46,9 +47,13 @@ const ipStream = from(expandRange(options.range)).pipe(
     share(),
 );
 
+const ipTableStream = defer(() => from(getTable()));
+
 ipStream
     .pipe(
-        mergeMap((ip) => getVendor(ip), 1),
+        toArray(),
+        combineLatest(ipTableStream),
+        mergeMap(([responses, arpTable]) => getVendors(responses, arpTable), 1),
         filter((ip) => (vendorRegExp != null ? vendorRegExp.test(ip.vendor) : true)),
         toArray(),
     )

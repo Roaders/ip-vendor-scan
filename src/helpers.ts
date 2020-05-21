@@ -3,7 +3,7 @@ import { from, Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { IIpVendor, ICommandLineArgs } from './contracts';
 import { stdout } from 'single-line-log';
-import { getTable } from '@network-utils/arp-lookup';
+import { IArpTableRow, IArpTable } from '@network-utils/arp-lookup';
 import { PingResponse } from 'ping';
 import { promises as dnsPromises } from 'dns';
 
@@ -84,12 +84,15 @@ export function getIpName(response: PingResponse): Observable<PingResponse> {
     );
 }
 
-export function getVendor(ip: PingResponse): Observable<IIpVendor> {
-    return from(getTable()).pipe(
-        map((table) => table.filter((row) => row.ip === ip.numeric_host)[0]),
-        map((row) => (row != null ? row.vendor : `Unknown`)),
-        map((vendor) => ({ ...ip, vendor })),
-    );
+function getVendor(response: PingResponse, arpTable: IArpTable): IIpVendor {
+    const row: IArpTableRow | undefined = arpTable.filter((row) => row.ip === response.numeric_host)[0];
+    const vendor = row ? row.vendor : `Unknown`;
+
+    return { ...response, vendor };
+}
+
+export function getVendors(responses: PingResponse[], arpTable: IArpTable): Observable<IIpVendor> {
+    return from(responses).pipe(map((response) => getVendor(response, arpTable)));
 }
 
 export function logProgress(count: number) {
