@@ -1,0 +1,11 @@
+{
+  "name": "ip-manufacturer-scanner",
+  "version": "1.0.0",
+  "description": "CLI that scans local network for IPs returning name and optionally manufacturer",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Giles Roadnight",
+  "license": "MIT"
+}
