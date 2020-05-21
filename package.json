@@ -50,7 +50,7 @@
         "single-line-log": "^1.1.2"
     },
     "repository": {
-        "url": "https://github.com/Roaders/ip-vendor-scanner.git",
+        "url": "https://github.com/Roaders/ip-vendor-scan.git",
         "type": "git"
     }
 }
