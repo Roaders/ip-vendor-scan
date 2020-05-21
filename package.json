@@ -1,7 +1,7 @@
 {
     "name": "ip-vendor-scanner",
     "version": "1.0.0",
-    "description": "CLI that scans network for IPs returning name and vendor",
+    "description": "Scans a range of IP addresses and returns a list of network names and vendors",
     "main": "dist/index.js",
     "bin": {
         "ip-vendor-scanner": "dist/index.js"
@@ -13,7 +13,7 @@
         "test": "jest",
         "test:watch": "jest --watch",
         "lint": "eslint \"**/*.ts\"",
-        "verify-release": "npm ci && npm run clean && concurrently --kill-others-on-fail npm:lint npm:build npm:lint",
+        "verify-release": "npm version patch && npm ci && npm run clean && concurrently --kill-others-on-fail npm:lint npm:build npm:lint",
         "prepublishOnly": "npm run verify-release"
     },
     "author": "Giles Roadnight",
