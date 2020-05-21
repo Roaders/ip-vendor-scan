@@ -1,10 +1,11 @@
 import { NetworkInterfaceInfo } from 'os';
-import { from, of, Observable } from 'rxjs';
-import { promises as dnsPromises } from 'dns';
-import { catchError, map } from 'rxjs/operators';
-import { IIPNames, IIpVendor } from './contracts';
+import { from, Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
+import { IIpVendor, ICommandLineArgs } from './contracts';
 import { stdout } from 'single-line-log';
 import { getTable } from '@network-utils/arp-lookup';
+import { PingResponse } from 'ping';
+import { promises as dnsPromises } from 'dns';
 
 export function verifyRange(range: string): boolean {
     //https://regex101.com/r/6lYGos/1
@@ -61,16 +62,31 @@ export function expandRange(range: string) {
     return ips;
 }
 
-export function getIpName(address: string): Observable<IIPNames> {
-    return from(dnsPromises.reverse(address)).pipe(
-        catchError(() => of(['no name'])),
-        map((names) => ({ address, names })),
+function nonWhitespaceText(value: any): value is string {
+    return typeof value === 'string' && value != '';
+}
+
+export function printWelcomeMessage(args: ICommandLineArgs) {
+    const matchText = [
+        args.name ? `names matching '${args.name}'` : undefined,
+        args.vendor ? `vendors matching '${args.vendor}'` : undefined,
+    ]
+        .filter(nonWhitespaceText)
+        .join(' and ');
+
+    return [`Scanning IP range '${args.range}'`, matchText].filter(nonWhitespaceText).join(' for ');
+}
+
+export function getIpName(response: PingResponse): Observable<PingResponse> {
+    return from(dnsPromises.reverse(response.host)).pipe(
+        catchError(() => of([])),
+        map((names) => ({ ...response, host: names[0] || 'name not found', numeric_host: response.host })),
     );
 }
 
-export function getVendor(ip: IIPNames): Observable<IIpVendor> {
+export function getVendor(ip: PingResponse): Observable<IIpVendor> {
     return from(getTable()).pipe(
-        map((table) => table.filter((row) => row.ip === ip.address)[0]),
+        map((table) => table.filter((row) => row.ip === ip.numeric_host)[0]),
         map((row) => (row != null ? row.vendor : `Unknown`)),
         map((vendor) => ({ ...ip, vendor })),
     );

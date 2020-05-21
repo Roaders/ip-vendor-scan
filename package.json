@@ -3,6 +3,9 @@
     "version": "1.0.0",
     "description": "CLI that scans network for IPs returning name and vendor",
     "main": "dist/index.js",
+    "bin": {
+        "ip-vendor-scanner": "dist/index.js"
+    },
     "scripts": {
         "clean": "rimraf dist",
         "build": "tsc",
@@ -10,19 +13,21 @@
         "test": "jest",
         "test:watch": "jest --watch",
         "lint": "eslint \"**/*.ts\"",
-        "prepublishOnly": "npm install && npm run clean && npm run lint && npm run build"
+        "verify-release": "npm ci && npm run clean && concurrently --kill-others-on-fail npm:lint npm:build npm:lint",
+        "prepublishOnly": "npm run verify-release"
     },
     "author": "Giles Roadnight",
     "license": "MIT",
     "devDependencies": {
-        "@types/jest": "^25.2.3",
         "@types/cli-table": "^0.3.0",
         "@types/command-line-args": "^5.0.0",
+        "@types/jest": "^25.2.3",
         "@types/node": "^14.0.4",
         "@types/ping": "^0.2.0",
         "@types/single-line-log": "^1.1.0",
         "@typescript-eslint/eslint-plugin": "^2.33.0",
         "@typescript-eslint/parser": "^2.33.0",
+        "concurrently": "^5.2.0",
         "eslint": "^6.8.0",
         "eslint-config-prettier": "^6.11.0",
         "eslint-plugin-prettier": "^3.1.3",

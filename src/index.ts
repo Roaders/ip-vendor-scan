@@ -1,9 +1,19 @@
+#!/usr/bin/env node
+
 import commandLineArgs from 'command-line-args';
 import { ICommandLineArgs } from './contracts';
-import { verifyRange, getDefaultRange, expandRange, getIpName, logProgress, getVendor } from './helpers';
+import {
+    verifyRange,
+    getDefaultRange,
+    expandRange,
+    logProgress,
+    getVendor,
+    getIpName,
+    printWelcomeMessage,
+} from './helpers';
 import { networkInterfaces } from 'os';
 import { from } from 'rxjs';
-import { mergeMap, filter, map, share, toArray, scan } from 'rxjs/operators';
+import { mergeMap, filter, share, toArray, scan } from 'rxjs/operators';
 import { promise as pingPromise } from 'ping';
 import Table from 'cli-table';
 
@@ -26,12 +36,13 @@ if (!verifyRange(options.range)) {
     throw new Error(`Range '${options.range}'is not in correct format: '192.168.0.[0-255]'`);
 }
 
+console.log(printWelcomeMessage(options));
+
 const ipStream = from(expandRange(options.range)).pipe(
-    mergeMap((ip) => from(pingPromise.probe(ip))),
+    mergeMap((ip) => from(pingPromise.probe(ip, { timeout: 1, numeric: true })), 100),
     filter((result) => result.alive),
-    map((result) => result.host),
-    mergeMap((ip) => getIpName(ip)),
-    filter((ip) => (nameRegExp != null ? ip.names.some((name) => nameRegExp.test(name)) : true)),
+    mergeMap(getIpName),
+    filter((result) => (nameRegExp != null ? nameRegExp.test(result.host) : true)),
     share(),
 );
 
@@ -45,7 +56,7 @@ ipStream
         console.log('');
 
         const table = new Table({ head: ['Address', 'Names', 'Vendor'] });
-        table.push(...ipVendors.map((vendor) => [vendor.address, vendor.names.join(','), vendor.vendor]));
+        table.push(...ipVendors.map((vendor) => [vendor.numeric_host, vendor.host, vendor.vendor]));
 
         console.log(table.toString());
     });

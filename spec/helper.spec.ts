@@ -1,4 +1,5 @@
-import { verifyRange, expandRange } from '../src/helpers';
+import { verifyRange, expandRange, printWelcomeMessage } from '../src/helpers';
+import { ICommandLineArgs } from '../src/contracts';
 
 describe('helpers', () => {
     describe('verifyRange', () => {
@@ -73,6 +74,30 @@ describe('helpers', () => {
         tests.forEach((test) => {
             it(`for range ${test.range} should return ${test.expected.map((ip) => `'${ip}'`).join(', ')}`, () => {
                 expect(expandRange(test.range)).toEqual(test.expected);
+            });
+        });
+    });
+
+    describe('printWelcomeMessage', () => {
+        const tests: { args: ICommandLineArgs; expected: string }[] = [
+            { args: { range: '192.168.0.[0-255]' }, expected: `Scanning IP range '192.168.0.[0-255]'` },
+            {
+                args: { range: '192.168.0.[0-255]', name: 'matchName' },
+                expected: `Scanning IP range '192.168.0.[0-255]' for names matching 'matchName'`,
+            },
+            {
+                args: { range: '192.168.0.[0-255]', vendor: 'matchVendor' },
+                expected: `Scanning IP range '192.168.0.[0-255]' for vendors matching 'matchVendor'`,
+            },
+            {
+                args: { range: '192.168.0.[0-255]', vendor: 'matchVendor', name: 'matchName' },
+                expected: `Scanning IP range '192.168.0.[0-255]' for names matching 'matchName' and vendors matching 'matchVendor'`,
+            },
+        ];
+
+        tests.forEach((test) => {
+            it(`should return '${test.expected}' given config ${JSON.stringify(test.args)}`, () => {
+                expect(printWelcomeMessage(test.args)).toEqual(test.expected);
             });
         });
     });

@@ -1,14 +1,11 @@
+import { PingResponse } from "ping";
+
 export interface ICommandLineArgs {
     range: string;
     name?: string;
     vendor?: string;
 }
 
-export interface IIPNames {
-    address: string;
-    names: string[];
-}
-
-export interface IIpVendor extends IIPNames {
+export interface IIpVendor extends PingResponse {
     vendor: string;
 }

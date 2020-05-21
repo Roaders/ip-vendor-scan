@@ -1,0 +1,4 @@
+src/
+spec/
+node_modules/
+tsconfig.json
