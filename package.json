@@ -13,7 +13,7 @@
         "test": "jest",
         "test:watch": "jest --watch",
         "lint": "eslint \"**/*.ts\"",
-        "verify-release": "npm ci && npm version patch && npm run clean && concurrently --kill-others-on-fail npm:lint npm:build npm:lint",
+        "verify-release": "rimraf node_modules && npm ci && npm version patch && npm run clean && concurrently --kill-others-on-fail npm:lint npm:build npm:lint",
         "prepublishOnly": "npm run verify-release"
     },
     "author": "Giles Roadnight",
