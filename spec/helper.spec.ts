@@ -1,4 +1,4 @@
-import { verifyRange, expandRange, printWelcomeMessage } from '../src/helpers';
+import { verifyRange, expandRange, printWelcomeMessage, getLookupDelay } from '../src/helpers';
 import { ICommandLineArgs } from '../src/contracts';
 
 describe('helpers', () => {
@@ -98,6 +98,20 @@ describe('helpers', () => {
         tests.forEach((test) => {
             it(`should return '${test.expected}' given config ${JSON.stringify(test.args)}`, () => {
                 expect(printWelcomeMessage(test.args)).toEqual(test.expected);
+            });
+        });
+    });
+
+    describe('getLookupDelay', () => {
+        const tests = [
+            { now: 5000, lastLookup: 0, expected: 0 },
+            { now: 5000, lastLookup: 5000, expected: 1100 },
+            { now: 5000, lastLookup: 4000, expected: 100 },
+        ];
+
+        tests.forEach((test) => {
+            it(`should return a delay of ${test.expected} when now is ${test.now} and last lookup was ${test.lastLookup}`, () => {
+                expect(getLookupDelay(test.lastLookup, test.now)).toEqual(test.expected);
             });
         });
     });

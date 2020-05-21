@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import commandLineArgs from 'command-line-args';
-import { ICommandLineArgs } from './contracts';
+import { ICommandLineArgs, IIpVendor } from './contracts';
 import {
     verifyRange,
     getDefaultRange,
@@ -10,12 +10,12 @@ import {
     getIpName,
     printWelcomeMessage,
     getVendors,
+    printResultsTable,
 } from './helpers';
 import { networkInterfaces } from 'os';
 import { from, defer } from 'rxjs';
 import { mergeMap, filter, share, toArray, scan, combineLatest } from 'rxjs/operators';
 import { promise as pingPromise } from 'ping';
-import Table from 'cli-table';
 import { getTable } from '@network-utils/arp-lookup';
 
 const commandOptions: Partial<ICommandLineArgs> = commandLineArgs([
@@ -47,6 +47,8 @@ const ipStream = from(expandRange(options.range)).pipe(
     share(),
 );
 
+let ipCount = 0;
+let vendors: IIpVendor[] = [];
 const ipTableStream = defer(() => from(getTable()));
 
 ipStream
@@ -55,15 +57,15 @@ ipStream
         combineLatest(ipTableStream),
         mergeMap(([responses, arpTable]) => getVendors(responses, arpTable), 1),
         filter((ip) => (vendorRegExp != null ? vendorRegExp.test(ip.vendor) : true)),
-        toArray(),
+        scan((all, vendor) => [...all, vendor], new Array<IIpVendor>()),
     )
-    .subscribe((ipVendors) => {
-        console.log('');
+    .subscribe(
+        (results) => {
+            vendors = results;
+            logProgress(ipCount, vendors);
+        },
+        undefined,
+        () => printResultsTable(vendors),
+    );
 
-        const table = new Table({ head: ['Address', 'Names', 'Vendor'] });
-        table.push(...ipVendors.map((vendor) => [vendor.numeric_host, vendor.host, vendor.vendor]));
-
-        console.log(table.toString());
-    });
-
-ipStream.pipe(scan((count) => ++count, 0)).subscribe((count) => logProgress(count));
+ipStream.pipe().subscribe(() => logProgress(++ipCount));
