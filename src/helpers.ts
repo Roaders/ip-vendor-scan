@@ -2,8 +2,9 @@ import { NetworkInterfaceInfo } from 'os';
 import { from, of, Observable } from 'rxjs';
 import { promises as dnsPromises } from 'dns';
 import { catchError, map } from 'rxjs/operators';
-import { IIPNames } from './contracts';
+import { IIPNames, IIpVendor } from './contracts';
 import { stdout } from 'single-line-log';
+import { getTable } from '@network-utils/arp-lookup';
 
 export function verifyRange(range: string): boolean {
     //https://regex101.com/r/6lYGos/1
@@ -12,10 +13,16 @@ export function verifyRange(range: string): boolean {
     return rangeRegExp.test(range);
 }
 
+function getLocalAddresses(interfaces: NodeJS.Dict<NetworkInterfaceInfo[]>) {
+    return Object.keys(interfaces).reduce(
+        (all, current) => [...all, ...interfaces[current]!],
+        new Array<NetworkInterfaceInfo>(),
+    );
+}
+
 export function getDefaultRange(interfaces: NodeJS.Dict<NetworkInterfaceInfo[]>): string {
     const currentAddress =
-        Object.keys(interfaces)
-            .reduce((all, current) => [...all, ...interfaces[current]!], new Array<NetworkInterfaceInfo>())
+        getLocalAddresses(interfaces)
             .filter((iface) => iface.family === 'IPv4' && !iface.internal)
             .map((iface) => iface.address)[0] || '192.168.0.1';
 
@@ -54,13 +61,21 @@ export function expandRange(range: string) {
     return ips;
 }
 
-export function getIpName(ip: string): Observable<IIPNames> {
-    return from(dnsPromises.reverse(ip)).pipe(
-        catchError(() => of(['unknown'])),
-        map((names) => ({ ip, names })),
+export function getIpName(address: string): Observable<IIPNames> {
+    return from(dnsPromises.reverse(address)).pipe(
+        catchError(() => of(['no name'])),
+        map((names) => ({ address, names })),
     );
 }
 
-export function logProgress(ips: IIPNames[]) {
-    stdout(`${ips.length} IP Addresses Found`);
+export function getVendor(ip: IIPNames): Observable<IIpVendor> {
+    return from(getTable()).pipe(
+        map((table) => table.filter((row) => row.ip === ip.address)[0]),
+        map((row) => (row != null ? row.vendor : `Unknown`)),
+        map((vendor) => ({ ...ip, vendor })),
+    );
+}
+
+export function logProgress(count: number) {
+    stdout(`${count} IP Addresses Found...`);
 }
