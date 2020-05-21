@@ -1,11 +1,25 @@
 {
-  "name": "ip-manufacturer-scanner",
-  "version": "1.0.0",
-  "description": "CLI that scans local network for IPs returning name and optionally manufacturer",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "Giles Roadnight",
-  "license": "MIT"
+    "name": "ip-manufacturer-scanner",
+    "version": "1.0.0",
+    "description": "CLI that scans local network for IPs returning name and optionally manufacturer",
+    "main": "dist/index.js",
+    "scripts": {
+        "clean": "rimraf dist",
+        "build": "tsc",
+        "watch-build": "tsc --watch",
+        "lint": "eslint \"**/*.ts\"",
+        "prepublishOnly": "npm install && npm run clean && npm run lint && npm run build"
+    },
+    "author": "Giles Roadnight",
+    "license": "MIT",
+    "devDependencies": {
+        "@typescript-eslint/eslint-plugin": "^2.33.0",
+        "@typescript-eslint/parser": "^2.33.0",
+        "eslint": "^6.8.0",
+        "eslint-config-prettier": "^6.11.0",
+        "eslint-plugin-prettier": "^3.1.3",
+        "prettier": "^2.0.5",
+        "rimraf": "^3.0.2",
+        "typescript": "^3.9.3"
+    }
 }
